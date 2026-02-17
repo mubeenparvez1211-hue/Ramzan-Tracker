@@ -220,7 +220,7 @@ function duaByDay(day){
   return "Allahumma Ajirni Minnan Naar";
 }
 
-let idCounter = 0;
+let idCounter = Object.keys(progressData).length;
 
 function prayerBoxes(day){
   let html = "";
@@ -327,3 +327,4 @@ if('serviceWorker' in navigator){
 
 </body>
 </html>
+
