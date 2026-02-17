@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ramzan Tracker</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a2f5a">
+
+<style>
+
+body{
+    margin:0;
+    font-family:system-ui;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(255,216,107,.15), transparent 140px),
+      #f0f7f3;
+    color:#0b3d2e;
+}
+
+/* ---------- HEADER THEME ---------- */
+
+.ramzan-header{
+    background:linear-gradient(180deg,#0a2f5a,#062247);
+    color:white;
+    padding:16px 10px 42px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:10;
+    overflow:hidden;
+}
+
+.ramzan-header h1{
+    margin:0;
+    font-size:20px;
+    font-weight:600;
+}
+
+.crescent{
+    position:absolute;
+    right:14px;
+    top:6px;
+    font-size:30px;
+    color:#ffd86b;
+    text-shadow:0 0 10px rgba(255,216,107,.6);
+}
+
+.mosque{
+    position:absolute;
+    left:0;
+    bottom:-1px;
+    width:100%;
+    height:52px;
+}
+
+/* ---------- UI ---------- */
+
+.progress{
+    background:#d5e8df;
+    margin:10px;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    background:#1e8449;
+    height:14px;
+    width:0%;
+    color:white;
+    font-size:11px;
+    text-align:center;
+}
+
+.instructions{
+    background:white;
+    margin:10px;
+    padding:12px;
+    border-left:5px solid #1e8449;
+    font-size:13px;
+}
+
+.card{
+    background:white;
+    margin:12px;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 4px 8px rgba(0,0,0,.08);
+}
+
+.card h3{
+    color:#0a2f5a;
+    margin-top:0;
+}
+
+.prayers{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:6px;
+    font-size:11px;
+    margin-bottom:6px;
+}
+
+.quran{
+    background:#eef7f1;
+    padding:10px;
+    border-radius:8px;
+    margin-top:10px;
+    font-size:13px;
+}
+
+footer{
+    text-align:center;
+    padding:15px;
+    font-size:12px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header class="ramzan-header">
+    <div class="crescent">☾</div>
+    <h1>Ramzan Quran & Tasbeeh Tracker</h1>
+
+    <!-- Mosque silhouette -->
+    <svg class="mosque" viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <path d="
+        M0,80
+        C80,40 160,40 240,80
+        C320,40 400,40 480,80
+        C560,40 640,40 720,80
+        C800,40 880,40 960,80
+        C1040,40 1120,40 1200,80
+        C1280,40 1360,40 1440,80
+        L1440,120 L0,120 Z"
+        fill="#062247"/>
+    </svg>
+</header>
+
+<div class="progress">
+    <div class="progress-bar" id="bar">0%</div>
+</div>
+
+<div class="instructions">
+<b>Quran Daily Plan</b><br>
+Fajr: 0.5 Para | Before Zohar: 1.5 Para | After Zohar: 0.5 Para<br>
+<b>Total: 2.5 Para / day</b><br>
+<b>After Para 30 → Restart from Para 1</b>
+</div>
+
+<script>
+
+let totalTasks = 30 * (6*5 + 3); // 6 tasbeeh x 5 prayers + 3 Quran ticks
+let done = 0;
+
+function tick(cb){
+    done += cb.checked ? 1 : -1;
+    done = Math.max(0, done);
+
+    let percent = Math.round((done / totalTasks) * 100);
+    document.getElementById("bar").style.width = percent + "%";
+    document.getElementById("bar").innerText = percent + "%";
+}
+
+let para = 1;
+
+function nextPara(p){
+    return (p + 2.5 > 30) ? (p + 2.5 - 30) : (p + 2.5);
+}
+
+function duaByDay(day){
+    if(day <= 10) return "Rabbighfir warham wa anta khairur rahemeen";
+    if(day <= 20) return "Astaghfirullah rabbi min kulli zambiyon wa atoobu ilaiyh";
+    return "Allahumma Ajirni Minnan Naar";
+}
+
+function prayerBoxes(){
+    return `
+    <label><input type="checkbox" onclick="tick(this)">Fajr</label>
+    <label><input type="checkbox" onclick="tick(this)">Zohar</label>
+    <label><input type="checkbox" onclick="tick(this)">Asar</label>
+    <label><input type="checkbox" onclick="tick(this)">Maghrib</label>
+    <label><input type="checkbox" onclick="tick(this)">Isha</label>
+    `;
+}
+
+for(let day=1; day<=30; day++){
+
+    let endPara = nextPara(para);
+
+    document.write(`
+    <div class="card">
+        <h3>Day ${day}</h3>
+
+        <b>La ilaha illallah Muhammadur Rasulullah</b>
+        <div class="prayers">${prayerBoxes()}</div>
+
+        <b>Darood</b>
+        <div class="prayers">${prayerBoxes()}</div>
+
+        <b>Tasbeeh Fatima</b>
+        <div class="prayers">${prayerBoxes()}</div>
+
+        <b>Astaghfirullah</b>
+        <div class="prayers">${prayerBoxes()}</div>
+
+        <b>Subhanallahi wa bihamdihi</b>
+        <div class="prayers">${prayerBoxes()}</div>
+
+        <b>${duaByDay(day)}</b>
+        <div class="prayers">${prayerBoxes()}</div>
+
+        <div class="quran">
+            <b>Quran Para ${para} → ${endPara}</b><br><br>
+            <label><input type="checkbox" onclick="tick(this)"> Fajr (0.5)</label><br>
+            <label><input type="checkbox" onclick="tick(this)"> Before Zohar (1.5)</label><br>
+            <label><input type="checkbox" onclick="tick(this)"> After Zohar (0.5)</label>
+        </div>
+    </div>
+    `);
+
+    para = endPara;
+}
+
+</script>
+
+<footer>
+May Allah accept our ibaadah. Ameen.
+</footer>
+
+<script>
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('service-worker.js');
+.then(reg => console.log('Service worker registered', reg))
+.catch(err => console.error('Service worker failed', err));
+}
+</script>
+
+</body>
+</html>
