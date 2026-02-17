@@ -152,79 +152,165 @@ Fajr: 0.5 Para | Before Zohar: 1.5 Para | After Zohar: 0.5 Para<br>
 </div>
 
 <script>
+const TOTAL_DAYS = 30;
+const PRAYERS_PER_BLOCK = 5;
+const BLOCKS = 6;
+const QURAN_TICKS = 3;
 
-let totalTasks = 30 * (6*5 + 3); // 6 tasbeeh x 5 prayers + 3 Quran ticks
-let done = 0;
+const totalTasks = TOTAL_DAYS * (BLOCKS * PRAYERS_PER_BLOCK + QURAN_TICKS);
 
-function tick(cb){
-    done += cb.checked ? 1 : -1;
-    done = Math.max(0, done);
+let progressData = JSON.parse(localStorage.getItem("ramzanData")) || {};
+let frozenDays  = JSON.parse(localStorage.getItem("ramzanFrozen")) || {};
 
-    let percent = Math.round((done / totalTasks) * 100);
-    document.getElementById("bar").style.width = percent + "%";
-    document.getElementById("bar").innerText = percent + "%";
+function saveData() {
+  localStorage.setItem("ramzanData", JSON.stringify(progressData));
+  localStorage.setItem("ramzanFrozen", JSON.stringify(frozenDays));
+}
+
+function updateBar() {
+  let done = Object.values(progressData).filter(v => v === true).length;
+  let percent = Math.round((done / totalTasks) * 100);
+  document.getElementById("bar").style.width = percent + "%";
+  document.getElementById("bar").innerText = percent + "%";
+}
+
+function tick(cb) {
+
+  const id = cb.dataset.id;
+  const day = cb.dataset.day;
+
+  progressData[id] = cb.checked;
+  saveData();
+
+  checkDayFreeze(day);
+  updateBar();
+}
+
+function checkDayFreeze(day) {
+
+  if (frozenDays[day]) return;
+
+  const boxes = document.querySelectorAll(
+    'input[type="checkbox"][data-day="'+day+'"]'
+  );
+
+  let allDone = true;
+
+  boxes.forEach(b => {
+    if (!b.checked) allDone = false;
+  });
+
+  if (allDone) {
+    frozenDays[day] = true;
+    saveData();
+    freezeDay(day);
+  }
+}
+
+function freezeDay(day) {
+  const boxes = document.querySelectorAll(
+    'input[type="checkbox"][data-day="'+day+'"]'
+  );
+  boxes.forEach(b => b.disabled = true);
+}
+
+function duaByDay(day){
+  if(day<=10) return "Rabbighfir warham wa anta khairur rahemeen";
+  if(day<=20) return "Astaghfirullah rabbi min kulli zambiyon wa atoobu ilaiyh";
+  return "Allahumma Ajirni Minnan Naar";
+}
+
+let idCounter = 0;
+
+function prayerBoxes(day){
+  let html = "";
+  ["Fajr","Zohar","Asar","Maghrib","Isha"].forEach(p=>{
+    const id = "cb_"+(++idCounter);
+    const checked = progressData[id] ? "checked" : "";
+    const disabled = frozenDays[day] ? "disabled" : "";
+
+    html += `<label>
+      <input type="checkbox"
+        data-id="${id}"
+        data-day="${day}"
+        ${checked}
+        ${disabled}
+        onclick="tick(this)"> ${p}
+    </label>`;
+  });
+  return html;
 }
 
 let para = 1;
 
 function nextPara(p){
-    return (p + 2.5 > 30) ? (p + 2.5 - 30) : (p + 2.5);
+  return (p + 2.5 > 30) ? (p + 2.5 - 30) : (p + 2.5);
 }
 
-function duaByDay(day){
-    if(day <= 10) return "Rabbighfir warham wa anta khairur rahemeen";
-    if(day <= 20) return "Astaghfirullah rabbi min kulli zambiyon wa atoobu ilaiyh";
-    return "Allahumma Ajirni Minnan Naar";
-}
+for(let day=1;day<=30;day++){
 
-function prayerBoxes(){
-    return `
-    <label><input type="checkbox" onclick="tick(this)">Fajr</label>
-    <label><input type="checkbox" onclick="tick(this)">Zohar</label>
-    <label><input type="checkbox" onclick="tick(this)">Asar</label>
-    <label><input type="checkbox" onclick="tick(this)">Maghrib</label>
-    <label><input type="checkbox" onclick="tick(this)">Isha</label>
-    `;
-}
+  let endPara = nextPara(para);
 
-for(let day=1; day<=30; day++){
+  document.write(`
+  <div class="card" id="day${day}">
+    <h3>Day ${day}</h3>
 
-    let endPara = nextPara(para);
+    <b>La ilaha illallah Muhammadur Rasulullah</b>
+    <div class="prayers">${prayerBoxes(day)}</div>
 
-    document.write(`
-    <div class="card">
-        <h3>Day ${day}</h3>
+    <b>Darood</b>
+    <div class="prayers">${prayerBoxes(day)}</div>
 
-        <b>La ilaha illallah Muhammadur Rasulullah</b>
-        <div class="prayers">${prayerBoxes()}</div>
+    <b>Tasbeeh Fatima</b>
+    <div class="prayers">${prayerBoxes(day)}</div>
 
-        <b>Darood</b>
-        <div class="prayers">${prayerBoxes()}</div>
+    <b>Astaghfirullah</b>
+    <div class="prayers">${prayerBoxes(day)}</div>
 
-        <b>Tasbeeh Fatima</b>
-        <div class="prayers">${prayerBoxes()}</div>
+    <b>Subhanallahi wa bihamdihi</b>
+    <div class="prayers">${prayerBoxes(day)}</div>
 
-        <b>Astaghfirullah</b>
-        <div class="prayers">${prayerBoxes()}</div>
+    <b>${duaByDay(day)}</b>
+    <div class="prayers">${prayerBoxes(day)}</div>
 
-        <b>Subhanallahi wa bihamdihi</b>
-        <div class="prayers">${prayerBoxes()}</div>
+    <div class="quran">
+      <b>Quran Para ${para} → ${endPara}</b><br><br>
 
-        <b>${duaByDay(day)}</b>
-        <div class="prayers">${prayerBoxes()}</div>
+      ${quranBox(day,"Fajr (0.5)")}
+      ${quranBox(day,"Before Zohar (1.5)")}
+      ${quranBox(day,"After Zohar (0.5)")}
 
-        <div class="quran">
-            <b>Quran Para ${para} → ${endPara}</b><br><br>
-            <label><input type="checkbox" onclick="tick(this)"> Fajr (0.5)</label><br>
-            <label><input type="checkbox" onclick="tick(this)"> Before Zohar (1.5)</label><br>
-            <label><input type="checkbox" onclick="tick(this)"> After Zohar (0.5)</label>
-        </div>
     </div>
-    `);
+  </div>
+  `);
 
-    para = endPara;
+  para = endPara;
 }
 
+function quranBox(day,label){
+  const id = "cb_"+(++idCounter);
+  const checked = progressData[id] ? "checked" : "";
+  const disabled = frozenDays[day] ? "disabled" : "";
+
+  return `<label>
+    <input type="checkbox"
+      data-id="${id}"
+      data-day="${day}"
+      ${checked}
+      ${disabled}
+      onclick="tick(this)"> ${label}
+  </label><br>`;
+}
+
+window.addEventListener("load",()=>{
+
+  updateBar();
+
+  Object.keys(frozenDays).forEach(d=>{
+    freezeDay(d);
+  });
+
+});
 </script>
 
 <footer>
@@ -241,4 +327,3 @@ if('serviceWorker' in navigator){
 
 </body>
 </html>
-
